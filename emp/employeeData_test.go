@@ -1,9 +1,11 @@
 package emp
 
 import (
+	"bytes"
+	"encoding/json"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 )
 
@@ -11,60 +13,64 @@ func TestGetEmployeeData(t *testing.T) {
 	tests := []struct {
 		description string
 		input       string
-		expRes      string
+		expRes      []Employee
 		statusCode  int
 	}{
-		{"All entries are present", "",
-			`[{"id":"1","name":"Aditi","age":22,"address":"UP"}]`, 200,
+		{"All entries are present",
+			"",
+			[]Employee{
+				{"1", "Aditi", 22, "UP"},
+			},
+			200,
 		},
 	}
 	for _, tc := range tests {
 		req, err := http.NewRequest("GET", "/get", nil)
 		if err != nil {
-			t.Fatal(err)
+			t.Errorf(err.Error()) //err.Error() will return a string
 		}
 		//response recorder
 		resRec := httptest.NewRecorder()
 
 		GetEmployeeData(resRec, req)
+		var val []Employee
+		_ = json.Unmarshal(resRec.Body.Bytes(), &val)
 
-		if status := resRec.Code; status != http.StatusOK {
-			t.Errorf("wrong status code returned: got %v want %v", status, http.StatusOK)
-		}
-		//expected := `[{"id":"1","name":"Aditi","age":22,"address":"UP"}]`
-		if strings.TrimSpace(resRec.Body.String()) != tc.expRes {
-			t.Errorf("handler returned unexpected body: got %v want [%v]", resRec.Body.String(), tc.expRes)
-		}
+		assert.Equal(t, tc.statusCode, resRec.Code)
+		assert.Equal(t, tc.expRes, val)
 	}
 }
 
 func TestPostEmployeeData(t *testing.T) {
 	tests := []struct {
 		description string
-		input       string
-		expRes      string
+		input       Employee
+		expRes      Employee
 		statusCode  int
 	}{
-		{"All entries are present", `{"id":"1","name":"Aditi","age":22,"address":"UP"}`,
-			`{"id":"1","name":"Aditi","age":22,"address":"UP"}`, 201,
-		},
-		{"entries are missing", `{"id":"1","name":"Aditi"}`,
-			`{"id":"1","name":"Aditi","age":0,"address":""}`, 201,
+		{"All entries are present",
+			Employee{
+				"1", "Aditi", 22, "UP",
+			},
+			Employee{
+				"1", "Aditi", 22, "UP",
+			},
+			201,
 		},
 	}
+
 	for _, tc := range tests {
-		req, err := http.NewRequest("POST", "/post", strings.NewReader(tc.input))
+		val, _ := json.Marshal(tc.input)
+		req, err := http.NewRequest("POST", "/post", bytes.NewReader(val))
 		if err != nil {
-			t.Fatal(err)
+			t.Errorf(err.Error())
 		}
 		//response recorder
 		resRec := httptest.NewRecorder()
 		PostEmployeeData(resRec, req)
-		if tc.statusCode != resRec.Code {
-			t.Errorf("handler returned unexpected code: got (%v) want [%v]", resRec.Code, tc.statusCode)
-		}
-		if strings.TrimSpace(resRec.Body.String()) != tc.expRes {
-			t.Errorf("handler returned unexpected body: got (%v) want [%v]", resRec.Body.String(), tc.expRes)
-		}
+		var actRes Employee
+		_ = json.Unmarshal(resRec.Body.Bytes(), &actRes)
+		assert.Equal(t, tc.statusCode, resRec.Code)
+		assert.Equal(t, tc.expRes, actRes)
 	}
 }
