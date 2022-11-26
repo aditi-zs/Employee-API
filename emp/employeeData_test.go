@@ -26,7 +26,7 @@ func TestGetEmployeeData(t *testing.T) {
 	}
 	//comment
 	for _, tc := range tests {
-		req, err := http.NewRequest("GET", "/get", nil)
+		req, err := http.NewRequest("GET", "/emp", nil)
 		if err != nil {
 			t.Errorf(err.Error()) //err.Error() will return a string
 		}
@@ -35,7 +35,7 @@ func TestGetEmployeeData(t *testing.T) {
 
 		GetEmployeeData(resRec, req)
 		var val []Employee
-		_ = json.Unmarshal(resRec.Body.Bytes(), &val)
+		_ = json.Unmarshal(resRec.Body.Bytes(), &val) //json to go
 
 		assert.Equal(t, tc.statusCode, resRec.Code)
 		assert.Equal(t, tc.expRes, val)
@@ -61,8 +61,8 @@ func TestPostEmployeeData(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		val, _ := json.Marshal(tc.input)
-		req, err := http.NewRequest("POST", "/post", bytes.NewReader(val))
+		val, _ := json.Marshal(tc.input) //go to json
+		req, err := http.NewRequest("POST", "/emp", bytes.NewReader(val))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -70,7 +70,7 @@ func TestPostEmployeeData(t *testing.T) {
 		resRec := httptest.NewRecorder()
 		PostEmployeeData(resRec, req)
 		var actRes Employee
-		_ = json.Unmarshal(resRec.Body.Bytes(), &actRes)
+		_ = json.Unmarshal(resRec.Body.Bytes(), &actRes) //json to go
 		assert.Equal(t, tc.statusCode, resRec.Code)
 		assert.Equal(t, tc.expRes, actRes)
 	}

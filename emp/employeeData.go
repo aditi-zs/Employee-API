@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"io/ioutil"
+	"log"
+
 	//"log"
 	"net/http"
 )
@@ -26,7 +28,13 @@ var employees = allEmployees{{"1", "Aditi", 22, "UP"}}
 func GetEmployeeData(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(employees)
+	//json.NewEncoder(w).Encode(employees)
+	respBody, err := json.Marshal(employees)
+	w.Write(respBody)
+	if err != nil {
+		log.Println(err)
+	}
+
 }
 
 func GetOneEmployeeData(w http.ResponseWriter, r *http.Request) {
@@ -34,11 +42,19 @@ func GetOneEmployeeData(w http.ResponseWriter, r *http.Request) {
 	empID := mux.Vars(r)["id"]
 	for _, val := range employees {
 		if (val.ID) == empID {
-			json.NewEncoder(w).Encode(val)
-
+			//	json.NewEncoder(w).Encode(val)
+			w.WriteHeader(http.StatusOK)
+			respBody, err := json.Marshal(val)
+			w.Write(respBody)
+			if err != nil {
+				log.Println(err)
+			}
+			return
 		}
 	}
-	w.WriteHeader(http.StatusOK)
+	//when id doesn't match with any record
+	w.WriteHeader(http.StatusBadRequest)
+	fmt.Fprintf(w, "ID doesn't exist")
 
 }
 
@@ -53,5 +69,10 @@ func PostEmployeeData(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(req, &emp)
 	employees = append(employees, emp)
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(emp)
+	//json.NewEncoder(w).Encode(emp)
+	respBody, err := json.Marshal(emp)
+	w.Write(respBody)
+	if err != nil {
+		log.Println(err)
+	}
 }
